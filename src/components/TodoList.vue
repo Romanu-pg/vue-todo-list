@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import type { Ref } from 'vue'
 import ListItem from './ListItem.vue'
 
@@ -8,28 +8,56 @@ type Item = {
   checked?: boolean
 }
 
-const listItems: Ref<Item[]> = ref([
+const storageItems: Ref<Item[]> = ref([])
+
+const defaultItems: Item[] = [
   { title: 'Make a todo list app', checked: true },
   { title: 'Predict the weather', checked: false },
-  { title: 'Play some tunes', checked: false },
+  { title: 'Read some comics', checked: false },
   { title: "Let's get cooking", checked: false },
   { title: 'Pump some iron', checked: false },
   { title: 'Track my expenses', checked: false },
-  { title: 'Organize a game night', checked: false },
+  { title: 'Organise a game night', checked: false },
   { title: 'Learn a new language', checked: false },
-  { title: 'Publish my work' },
-])
+  { title: 'Publish my work', checked: false },
+]
+
+const setToStorage = (items: Item[]): void => {
+  localStorage.setItem('list-items', JSON.stringify(items))
+}
+
+const getFromStorage = (): Item[] => {
+  const stored = localStorage.getItem('list-items')
+
+  if (stored) {
+    return JSON.parse(stored)
+  }
+
+  return []
+}
+
+const initListItems = (): void => {
+  const storedItems = getFromStorage()
+
+  if (storedItems.length > 0) {
+    storageItems.value = storedItems
+  } else {
+    storageItems.value = defaultItems
+    setToStorage(defaultItems)
+  }
+}
 
 const updateItem = (item: Item): void => {
   const updatedItem = findItemInList(item)
 
   if (updatedItem) {
     toggleItemChecked(updatedItem)
+    setToStorage(storageItems.value)
   }
 }
 
 const findItemInList = (item: Item): Item | undefined => {
-  return listItems.value.find(
+  return storageItems.value.find(
     (itemInList: Item) => itemInList.title === item.title,
   )
 }
@@ -39,10 +67,14 @@ const toggleItemChecked = (item: Item): void => {
 }
 
 const sortedList = computed(() =>
-  [...listItems.value].sort(
+  [...storageItems.value].sort(
     (a, b) => (a.checked ? 1 : 0) - (b.checked ? 1 : 0),
   ),
 )
+
+onMounted(() => {
+  initListItems()
+})
 </script>
 
 <template>
